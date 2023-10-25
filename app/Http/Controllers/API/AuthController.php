@@ -23,18 +23,15 @@ class AuthController extends Controller
         'email' => 'required|string|email',
         'password' => 'required|string',
     ]);
-
     if ($validator->fails()) {
         return response()->json([
             'message' => 'Dados de entrada inválidos',
             'errors' => $validator->errors(),
         ], 422); // Código 422 para Entidade não processável (Unprocessable Entity)
     }
-
     if (Auth::attempt(['email' => $request->email, 'password' => $request->password])) {
         $user = Auth::user();
         $token = $user->createToken('Passport App')->accessToken;
-
         return response()->json([
             'user' => $user,
             'token' => $token,
@@ -46,20 +43,15 @@ class AuthController extends Controller
     ], 401); // Código 401 para Não Autorizado (Unauthorized)
 }
 
-public function logout()
+public function logout(Request $request)
 {
-    try {
-        Auth::guard('api')->user()->token()->revoke();
-    } catch (\Exception $e) {
-        return response()->json([
-            'message' => 'Token inválido ou não autorizado.',
-        ], 401);
+    if ($request->user()) {
+        $request->user()->token()->revoke();
+        return response()->json(['message' => 'Logout realizado com sucesso!']);
     }
-
-    return response()->json([
-        'message' => 'Logout realizado com sucesso!',
-    ], 200);
+    return response()->json(['message' => 'Usuário não está logado.'], 401);
 }
+
 
     public function register(Request $request)
 {
@@ -68,20 +60,17 @@ public function logout()
         'email' => 'required|string|email|max:255|unique:users',
         'password' => 'required|string|min:6',
     ]);
-
     if ($validator->fails()) {
         return response()->json([
             'message' => 'Erro de validação',
             'errors' => $validator->errors()
         ], 422); // Código 422 para entidades não processáveis
     }
-
     $user = User::create([
         'name' => $request->name,
         'email' => $request->email,
         'password' => Hash::make($request->password),
     ]);
-
     return response()->json([
         'message' => 'Usuário criado com sucesso',
         'user' => $user
